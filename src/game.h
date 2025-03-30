@@ -10,6 +10,7 @@ extern Uint32 g_change_scene_event_type;
 typedef enum _GAME_STATE {
     state_menu,
     state_gameplay,
+    state_join_lobby,
     state_game_over
 } GAME_STATE;
 
@@ -30,6 +31,7 @@ typedef struct _GAME {
     FONT            *font;
     MENU            *start_menu;
     MENU            *game_over_menu;
+    MENU            *join_lobby_menu;
     DECK            *deck;
     GAME_FIELD      field;
 
@@ -51,6 +53,7 @@ typedef struct _SCENE {
 extern SCENE g_menu_scene;
 extern SCENE g_gameplay_scene;
 extern SCENE g_game_over_scene;
+extern SCENE g_join_lobby_scene;
 
 int init_game(GAME *game, const RESOLUTION *resolution);
 void exit_game(GAME *game);

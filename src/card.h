@@ -28,6 +28,7 @@ typedef enum _VALUE {
 typedef struct _CARD {
     VALUE value;
     SUIT suit;
+    int selected; //0 if not selected, 1 if selected
 } CARD;
 
 typedef struct _HAND {

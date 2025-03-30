@@ -6,16 +6,27 @@ enum {
     field_height_in_cells = 10
 };
 
+enum {
+    card_width = 60,
+    card_height = 84
+};
+
 Uint32 g_change_scene_event_type = (Uint32)-1;
 
 static const char *g_start_menu_items[] = {
-    "start",
+    "create lobby",
+    "join lobby",
     "exit"
 };
 
 static const char *g_game_over_menu_items[] = {
     "restart",
     "menu"
+};
+
+static const char *g_join_lobby_menu_items[] = {
+    "join",
+    "back"
 };
 
 int init_game(GAME *game, const RESOLUTION *resolution) {
@@ -26,13 +37,18 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
         return status;
     }
 
-    game->start_menu = create_menu(2, g_start_menu_items);
+    game->start_menu = create_menu(3, g_start_menu_items);
     if (game->start_menu == NULL) {
         return status;
     }
 
     game->game_over_menu = create_menu(2, g_game_over_menu_items);
     if (game->game_over_menu == NULL) {
+        return status;
+    }
+
+    game->join_lobby_menu = create_menu(2, g_join_lobby_menu_items);
+    if (game->join_lobby_menu == NULL) {
         return status;
     }
 
@@ -92,6 +108,7 @@ void exit_game(GAME *game) {
     }
 }
 
+//TODO - dodje do seg fault-a kad kliknem esc u gameplay sceni
 int
 gameplay_handle_events(GAME *game, const SDL_Event *event) {
     int status = 0;
@@ -157,11 +174,11 @@ gameplay_render(GAME *game) {
 
     SDL_RenderTexture(game->renderer, texture, NULL, NULL);
     SDL_DestroyTexture(texture);
-    //* Card size (60, 84) 5x(5, 7)
 
+    //* Card size (60, 84) 5x(5, 7)
     HAND hand; 
     hand.count = 3;
-    hand.cards = SDL_malloc(sizeof(CARD) * 3);
+    hand.cards = SDL_malloc(sizeof(CARD) * hand.count);
     if (hand.cards == NULL) {
         SDL_Log("SDL_malloc error: %s\n", SDL_GetError());
         return status;
@@ -169,15 +186,14 @@ gameplay_render(GAME *game) {
     hand.cards[0] = game->deck->cards[0];
     hand.cards[1] = game->deck->cards[1];
     hand.cards[2] = game->deck->cards[2];
-    int rect_width = (width - 60 * 3) / 2;
-    int rect_height = (height - 84 * 2);
-
+    int rect_width = (width - card_width * hand.count) / 2;
+    int rect_height = (height - card_height * 2);
 
     SDL_FRect rect = {
         .x = rect_width,
         .y = rect_height,
-        .w = 60,
-        .h = 84 
+        .w = card_width,
+        .h = card_height 
     };
     
     status = render_hand(game->renderer, &hand, &rect);
@@ -185,25 +201,7 @@ gameplay_render(GAME *game) {
         SDL_Log("render_card error...\n");
         return status;
     }
-
-    // int text_width, text_height;
-    // const char *game_play_text = "Gameplay";
-    // status = get_text_size(game->font, game_play_text, (int)game->field.relative_size, &text_width, &text_height);
-    // if (status == 0) {
-    //     return status;
-    // }
-
-    // status = print_font_to_renderer(
-    //     game->font,
-    //     game->renderer,
-    //     game_play_text,
-    //     (int)game->field.relative_size, 
-    //     (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
-    //     (SDL_Point){(width - text_width) / 2, (height - text_height) / 2}
-    // );
-    // if (status == 0) {
-    //     return status;
-    // }
+    //* Render hand
 
     status = SDL_RenderPresent(game->renderer);
     if (status == 0) {

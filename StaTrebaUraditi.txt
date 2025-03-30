@@ -1,0 +1,10 @@
+treba uraditi sledece:
+Sta treba server da radi:
+1. treba da cita podatke svakog igraca
+2. treba da se bavi o redosledu koj igrac
+
+Sta treba klijent da radi:
+1. treba da radi svoj event hander za njegovu ruku
+2. treba da ima svoj meni gde moze da: izadje iz igrice; udje u neki lobby; ode u podesavanja
+3. treba da ima svoj render algoritam koji renderuje njegovu ruku, a ostalim igracima ne treba da im se vide karte i igrac uvek mora da bude na donjem delu ekrana
+4. treba da salje pakete serveru 

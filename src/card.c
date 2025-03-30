@@ -30,7 +30,6 @@ DECK* create_deck() {
     }
 
     shuffle_deck(deck);
-
     return deck;
 }
 
@@ -97,9 +96,9 @@ int render_hand(SDL_Renderer *renderer, HAND *hand, SDL_FRect *rect) {
     
     SDL_Surface *surface;
     SDL_Texture *texture;
-
+    char *path;
     for (int i = 0; i < hand->count; i++) {
-        char *path = find_path(&hand->cards[i]);
+        path = find_path(&hand->cards[i]);
         if (path == NULL) {
             SDL_Log("Path is NULL");
             return status;
@@ -122,6 +121,8 @@ int render_hand(SDL_Renderer *renderer, HAND *hand, SDL_FRect *rect) {
         }
         rect->x += 60;
     }
-    
+    SDL_free(path);
+    SDL_DestroySurface(surface);
+    SDL_DestroyTexture(texture);
     return status;
 }

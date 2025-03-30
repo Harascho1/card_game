@@ -2,9 +2,16 @@
 #define MENU_H
 
 enum START_MENU_ITEM_TYPE {
-    start_menu_start,
+    start_menu_create_lobby,
+    start_menu_join_lobby,
     start_menu_exit,
     start_menu_max
+};
+
+enum JOIN_LOBBY_ITEM_TYPE {
+    join_lobby_join,
+    join_lobby_back,
+    join_lobby_max
 };
 
 enum GAME_OVER_MENU_ITEM_TYPE {
