@@ -78,6 +78,7 @@ start_menu_handle_events(GAME *game, const SDL_Event *event) {
                     push_user_event(g_change_scene_event_type, state_gameplay);
                 }
                 if (game->start_menu->active_type == start_menu_join_lobby) {
+                    // TODO - napravi connection
                     push_user_event(g_change_scene_event_type, state_join_lobby);
                 }
                 else if (game->start_menu->active_type == start_menu_exit) {
@@ -383,6 +384,7 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
             }
             break;
             case SDLK_ESCAPE: {
+                // destroy
                 push_user_event(g_change_scene_event_type, state_menu);
             }
             break;
@@ -398,6 +400,12 @@ int
 join_lobby_update(GAME *game) {
     return 0;
 }
+
+const char* printed_text[] = {
+    "Insert ip address & port:",
+    "ip addres:",
+    "port:"
+};
 
 int
 join_lobby_render(GAME *game) {
@@ -420,6 +428,27 @@ join_lobby_render(GAME *game) {
     if (status == 0) {
         SDL_Log("SDL_RenderTexture error: %s\n", SDL_GetError());
         return status;
+    }
+
+
+    int text_width = 0, text_height;
+    status = get_text_size(game->font, printed_text[0], game->field.relative_size, &text_width, &text_height);
+    if (status == 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        status = print_font_to_renderer(
+            game->font,
+            game->renderer,
+            printed_text[i],
+            game->field.relative_size,
+            (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
+            (SDL_Point){width / 8, (height / 4 + (text_height * 2 * i))}
+        );
+        if (status == 0) {
+            return 0;
+        }
     }
 
     status = SDL_RenderPresent(game->renderer);

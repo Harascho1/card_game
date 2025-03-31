@@ -4,6 +4,7 @@
 #include "font.h"
 #include "menu.h"
 #include "card.h"
+#include "connecting.h"
 
 extern Uint32 g_change_scene_event_type;
 
@@ -32,6 +33,7 @@ typedef struct _GAME {
     MENU            *start_menu;
     MENU            *game_over_menu;
     MENU            *join_lobby_menu;
+    CONNECTION      *connection;
     DECK            *deck;
     GAME_FIELD      field;
 
