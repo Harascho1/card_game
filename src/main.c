@@ -8,14 +8,8 @@ static SCENE*
 g_scene[] = {
     &g_menu_scene,
     &g_gameplay_scene,
+    &g_join_lobby_scene,
     &g_game_over_scene
-};
-
-static const int
-g_scene_count[] = {
-    60,
-    5,
-    60
 };
 
 static GAME_STATE g_current_scene = state_menu;

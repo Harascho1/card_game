@@ -86,7 +86,6 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
     }
 
     g_change_scene_event_type = change_scene_event_type;
-
     return true;
 
 }
@@ -102,13 +101,18 @@ void exit_game(GAME *game) {
         if (game->start_menu) {
             destroy_menu(game->start_menu);
         }
+        if (game->game_over_menu) {
+            destroy_menu(game->game_over_menu);
+        }
+        if (game->join_lobby_menu) {
+            destroy_menu(game->join_lobby_menu);
+        }
         if (game->font) {
             destroy_font(game->font);
         }
     }
 }
 
-//TODO - dodje do seg fault-a kad kliknem esc u gameplay sceni
 int
 gameplay_handle_events(GAME *game, const SDL_Event *event) {
     int status = 0;
@@ -132,6 +136,8 @@ int
 push_user_event(Uint32 type, Sint32 code) {
     SDL_Event event;
     SDL_memset(&event, 0, sizeof(event));
+
+    printf("code je: %d\n",code);
 
     event.type = type;
     event.user.code = code;
@@ -196,12 +202,12 @@ gameplay_render(GAME *game) {
         .h = card_height 
     };
     
+    //* Render hand
     status = render_hand(game->renderer, &hand, &rect);
     if (status == 0) {
         SDL_Log("render_card error...\n");
         return status;
     }
-    //* Render hand
 
     status = SDL_RenderPresent(game->renderer);
     if (status == 0) {

@@ -229,9 +229,9 @@ game_over_menu_handle_events(GAME *game, const SDL_Event *event) {
                 }
                 else if (game->game_over_menu->active_type == game_over_menu_retry) {
                     push_user_event(g_change_scene_event_type, state_gameplay);
-                    
                 }
             }
+            break;
             case SDLK_ESCAPE: {
                 push_user_event(g_change_scene_event_type, state_menu);
             }
@@ -381,6 +381,7 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
                     
                 }
             }
+            break;
             case SDLK_ESCAPE: {
                 push_user_event(g_change_scene_event_type, state_menu);
             }

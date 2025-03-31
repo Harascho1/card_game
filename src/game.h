@@ -8,7 +8,7 @@
 extern Uint32 g_change_scene_event_type;
 
 typedef enum _GAME_STATE {
-    state_menu,
+    state_menu = 0,
     state_gameplay,
     state_join_lobby,
     state_game_over
