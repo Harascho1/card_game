@@ -9,7 +9,6 @@ typedef enum _TEXT_BOX_STATUS {
 typedef struct _TEXT_BOX {
     char *buffer;
     TEXT_BOX_STATUS status;
-    SDL_Rect rect;
 } TEXT_BOX;
 
 typedef struct _CONNECTION {

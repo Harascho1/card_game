@@ -437,19 +437,58 @@ join_lobby_render(GAME *game) {
         return 0;
     }
 
-    for (int i = 0; i < 3; i++) {
+    status = print_font_to_renderer(
+        game->font,
+        game->renderer,
+        printed_text[0],
+        game->field.relative_size,
+        (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
+        (SDL_Point){(width - text_width) / 2, (height / 10 - text_height)}
+    );
+    if (status == 0) {
+        return 0;
+    }
+
+    SDL_Texture *backgroung_text = CreateTextureFromImage(game->renderer, "../assets/Day/1.png");
+    if (backgroung_text == NULL) {
+        SDL_Log("Error CreateTextureFromImage\n");
+        status = 0;
+        return status;
+    }
+
+    for (int i = 1; i < 3; i++) {
+        int text_width = 0, text_height;
+        status = get_text_size(game->font, printed_text[i], game->field.relative_size, &text_width, &text_height);
+        if (status == 0) {
+            return 0;
+        }
+
         status = print_font_to_renderer(
             game->font,
             game->renderer,
             printed_text[i],
             game->field.relative_size,
             (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
-            (SDL_Point){width / 8, (height / 4 + (text_height * 2 * i))}
+            (SDL_Point){width / 10, (height / 4 + (text_height * 2 * i))}
         );
         if (status == 0) {
             return 0;
         }
+
+        const SDL_FRect box = (SDL_FRect){(width / 10) + text_width + game->field.relative_size, 
+            (height / 4 + (text_height * 2 * i)), 
+            8 * game->field.relative_size, 
+            game->field.relative_size
+        };
+
+        status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &box);
+        if (status == 0) {
+            SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+            return status;
+        }
     }
+
+    SDL_DestroyTexture(backgroung_text);
 
     status = SDL_RenderPresent(game->renderer);
     if (status == 0) {
