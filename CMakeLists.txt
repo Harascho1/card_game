@@ -10,6 +10,7 @@ set(HEADER_FILES
     ${CMAKE_SOURCE_DIR}/src/menu.h
     ${CMAKE_SOURCE_DIR}/src/game.h
     ${CMAKE_SOURCE_DIR}/src/card.h
+    ${CMAKE_SOURCE_DIR}/src/connection.h
 )
 
 link_directories(${PROJECT_SOURCE_DIR}/lib)
@@ -27,6 +28,7 @@ file(GLOB_RECURSE sdl_proj_src
     ${CMAKE_SOURCE_DIR}/src/font.c
     ${CMAKE_SOURCE_DIR}/src/card.c
     ${CMAKE_SOURCE_DIR}/src/game.c
+    ${CMAKE_SOURCE_DIR}/src/connection.c
     ${CMAKE_SOURCE_DIR}/src/main.c
 )
 

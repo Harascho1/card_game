@@ -4,7 +4,7 @@
 #include "font.h"
 #include "menu.h"
 #include "card.h"
-#include "connecting.h"
+#include "connection.h"
 
 extern Uint32 g_change_scene_event_type;
 

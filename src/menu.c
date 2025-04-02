@@ -79,6 +79,7 @@ start_menu_handle_events(GAME *game, const SDL_Event *event) {
                 }
                 if (game->start_menu->active_type == start_menu_join_lobby) {
                     // TODO - napravi connection
+                    SDL_StartTextInput(game->window);
                     push_user_event(g_change_scene_event_type, state_join_lobby);
                 }
                 else if (game->start_menu->active_type == start_menu_exit) {
@@ -347,6 +348,8 @@ SCENE g_game_over_scene = {
     .renderer = game_over_menu_render
 };
 
+
+
 // * JOIN LOBBY SCENE
 int
 join_lobby_handle_events(GAME *game, const SDL_Event *event) {
@@ -359,6 +362,15 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
 
     if (event->type == SDL_EVENT_KEY_DOWN) {
         switch (event->key.key) {
+            case SDLK_TAB: {
+                if (game->connection->ip_addr.status == SELECTED) {
+                    game->connection->ip_addr.status = NOT_SELECTED;
+                    game->connection->port.status = SELECTED;
+                } else {
+                    game->connection->ip_addr.status = SELECTED;
+                    game->connection->port.status = NOT_SELECTED;
+                }
+            }
             case SDLK_UP: {
                 if (game->join_lobby_menu->active_type > game_over_menu_retry) {
                     game->join_lobby_menu->items[game->join_lobby_menu->active_type--].state = item_state_idle;
@@ -384,12 +396,24 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
             }
             break;
             case SDLK_ESCAPE: {
-                // destroy
+                SDL_StopTextInput(game->window);
                 push_user_event(g_change_scene_event_type, state_menu);
             }
             break;
         default:
             break;
+        }
+    } else if (event->type == SDL_EVENT_TEXT_INPUT) {
+        if (strlen(game->connection->ip_addr.buffer) < game->connection->ip_addr.max_length && game->connection->ip_addr.status == SELECTED) {
+            printf("text : %s\n", event->text.text);
+            strcat(game->connection->ip_addr.buffer, event->text.text);
+            // prov radimo samo da li radi upis ip_addrese
+        } else if (strlen(game->connection->port.buffer) < game->connection->port.max_length && game->connection->port.status == SELECTED) {
+            if (event->text.text[0] == '\n') {
+                game->connection->port.buffer[strlen(game->connection->port.buffer)] = '\0';
+            } else {
+                game->connection->port.buffer[strlen(game->connection->port.buffer)] = event->text.text[0];
+            }
         }
     }
 
@@ -401,11 +425,7 @@ join_lobby_update(GAME *game) {
     return 0;
 }
 
-const char* printed_text[] = {
-    "Insert ip address & port:",
-    "ip addres:",
-    "port:"
-};
+TEXT_BOX text_boxes[2];
 
 int
 join_lobby_render(GAME *game) {
@@ -432,7 +452,7 @@ join_lobby_render(GAME *game) {
 
 
     int text_width = 0, text_height;
-    status = get_text_size(game->font, printed_text[0], game->field.relative_size, &text_width, &text_height);
+    status = get_text_size(game->font, game->join_lobby_menu->items[0].text, game->field.relative_size, &text_width, &text_height);
     if (status == 0) {
         return 0;
     }
@@ -440,7 +460,7 @@ join_lobby_render(GAME *game) {
     status = print_font_to_renderer(
         game->font,
         game->renderer,
-        printed_text[0],
+        game->join_lobby_menu->items[0].text,
         game->field.relative_size,
         (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
         (SDL_Point){(width - text_width) / 2, (height / 10 - text_height)}
@@ -458,7 +478,7 @@ join_lobby_render(GAME *game) {
 
     for (int i = 1; i < 3; i++) {
         int text_width = 0, text_height;
-        status = get_text_size(game->font, printed_text[i], game->field.relative_size, &text_width, &text_height);
+        status = get_text_size(game->font, game->join_lobby_menu->items[i].text, game->field.relative_size, &text_width, &text_height);
         if (status == 0) {
             return 0;
         }
@@ -466,7 +486,7 @@ join_lobby_render(GAME *game) {
         status = print_font_to_renderer(
             game->font,
             game->renderer,
-            printed_text[i],
+            game->join_lobby_menu->items[i].text,
             game->field.relative_size,
             (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
             (SDL_Point){width / 10, (height / 4 + (text_height * 2 * i))}
@@ -475,18 +495,31 @@ join_lobby_render(GAME *game) {
             return 0;
         }
 
-        const SDL_FRect box = (SDL_FRect){(width / 10) + text_width + game->field.relative_size, 
-            (height / 4 + (text_height * 2 * i)), 
-            8 * game->field.relative_size, 
-            game->field.relative_size
-        };
+        status = print_font_to_renderer(
+            game->font,
+            game->renderer,
+            game->connection->ip_addr.buffer,
+            game->field.relative_size,
+            (SDL_Color){.r = 0, .g = 255, .b = 255, .a = 255},
+            (SDL_Point){width / 10 + 5, (height / 4 + (text_height * 2 * i)) + game->field.relative_size}
+        );
 
-        status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &box);
-        if (status == 0) {
-            SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
-            return status;
-        }
+        printf("ip addr: %s\n", game->connection->ip_addr.buffer);
     }
+
+    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->ip_addr.rect);
+    if (status == 0) {
+        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+        return status;
+    }
+
+    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->port.rect);
+    if (status == 0) {
+        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+        return status;
+    }
+
+    //printf("ip addr status: %d\n", game->connection->ip_addr.status);
 
     SDL_DestroyTexture(backgroung_text);
 

@@ -25,6 +25,9 @@ static const char *g_game_over_menu_items[] = {
 };
 
 static const char *g_join_lobby_menu_items[] = {
+    "insert ip address & port",
+    "ip address:",
+    "port:",
     "join",
     "back"
 };
@@ -47,10 +50,11 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
         return status;
     }
 
-    game->join_lobby_menu = create_menu(2, g_join_lobby_menu_items);
+    game->join_lobby_menu = create_menu(5, g_join_lobby_menu_items);
     if (game->join_lobby_menu == NULL) {
         return status;
     }
+
 
     game->window = SDL_CreateWindow(
             "Game", 
@@ -71,6 +75,27 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
 
     game->font = create_font("../assets/font.ttf", game->field.relative_size, (SDL_Color){.r = 100, .g = 100, .b = 100, .a = 255});
     if (game->font == NULL) {
+        return status;
+    }
+
+    int text_height;
+    status = get_text_size(game->font, "port:", game->field.relative_size, NULL, &text_height);
+    if (status == 0) {
+        return status;
+    }
+
+    SDL_FRect rects[2];
+    for (int i = 0; i < 2; i++) {
+        rects[i] = (SDL_FRect){
+            .x = resolution->width / 10,
+            .y = (resolution->height / 4) + (text_height * 2 * (i + 1)) + game->field.relative_size,
+            .w = game->field.relative_size * 10,
+            .h = game->field.relative_size 
+        };
+    }
+
+    game->connection = connection_init(rects[0], rects[1]);
+    if (game->connection == NULL) {
         return status;
     }
 
@@ -106,6 +131,9 @@ void exit_game(GAME *game) {
         }
         if (game->join_lobby_menu) {
             destroy_menu(game->join_lobby_menu);
+        }
+        if (game->connection) {
+            destroy_connection(game->connection);
         }
         if (game->font) {
             destroy_font(game->font);
