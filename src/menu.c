@@ -397,6 +397,8 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
             break;
             case SDLK_ESCAPE: {
                 SDL_StopTextInput(game->window);
+                memset(game->connection->ip_addr.buffer, 0, game->connection->ip_addr.max_length);
+                memset(game->connection->port.buffer, 0, game->connection->port.max_length);
                 push_user_event(g_change_scene_event_type, state_menu);
             }
             break;
@@ -476,6 +478,18 @@ join_lobby_render(GAME *game) {
         return status;
     }
 
+    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->ip_addr.rect);
+    if (status == 0) {
+        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+        return status;
+    }
+
+    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->port.rect);
+    if (status == 0) {
+        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+        return status;
+    }
+
     for (int i = 1; i < 3; i++) {
         int text_width = 0, text_height;
         status = get_text_size(game->font, game->join_lobby_menu->items[i].text, game->field.relative_size, &text_width, &text_height);
@@ -495,28 +509,21 @@ join_lobby_render(GAME *game) {
             return 0;
         }
 
+        if (game->connection->ip_addr.buffer[0] == '\0')  {
+            continue;
+        }
         status = print_font_to_renderer(
             game->font,
             game->renderer,
             game->connection->ip_addr.buffer,
             game->field.relative_size,
             (SDL_Color){.r = 0, .g = 255, .b = 255, .a = 255},
-            (SDL_Point){width / 10 + 5, (height / 4 + (text_height * 2 * i)) + game->field.relative_size}
+            (SDL_Point){width / 10 + 5, (height / 4 + (text_height * 2 * 1)) + game->field.relative_size}
         );
-
-        printf("ip addr: %s\n", game->connection->ip_addr.buffer);
-    }
-
-    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->ip_addr.rect);
-    if (status == 0) {
-        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
-        return status;
-    }
-
-    status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->port.rect);
-    if (status == 0) {
-        SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
-        return status;
+        if (status == 0) {
+            SDL_Log("ip addr: %s\n", game->connection->ip_addr.buffer);
+            return 0;
+        }
     }
 
     //printf("ip addr status: %d\n", game->connection->ip_addr.status);
