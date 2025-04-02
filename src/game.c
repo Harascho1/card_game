@@ -28,7 +28,7 @@ static const char *g_join_lobby_menu_items[] = {
     "insert ip address & port",
     "ip address:",
     "port:",
-    "join",
+    "join[press enter]",
     "back"
 };
 

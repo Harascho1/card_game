@@ -322,7 +322,7 @@ game_over_menu_render(GAME *game) {
                 ">",
                 (int)game->field.relative_size,
                 (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
-                (SDL_Point){(width - game->field.relative_size - text_retry_width) / 2, height / 2 + text_retry_height}
+                (SDL_Point){(width - text_retry_width) / 2 - game->field.relative_size, height / 2 + text_retry_height}
             );
             if (status == 0) {
                 return 0;
@@ -407,15 +407,10 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
         }
     } else if (event->type == SDL_EVENT_TEXT_INPUT) {
         if (strlen(game->connection->ip_addr.buffer) < game->connection->ip_addr.max_length && game->connection->ip_addr.status == SELECTED) {
-            printf("text : %s\n", event->text.text);
             strcat(game->connection->ip_addr.buffer, event->text.text);
             // prov radimo samo da li radi upis ip_addrese
         } else if (strlen(game->connection->port.buffer) < game->connection->port.max_length && game->connection->port.status == SELECTED) {
-            if (event->text.text[0] == '\n') {
-                game->connection->port.buffer[strlen(game->connection->port.buffer)] = '\0';
-            } else {
-                game->connection->port.buffer[strlen(game->connection->port.buffer)] = event->text.text[0];
-            }
+            strcat(game->connection->port.buffer, event->text.text);
         }
     }
 
@@ -524,12 +519,46 @@ join_lobby_render(GAME *game) {
             SDL_Log("ip addr: %s\n", game->connection->ip_addr.buffer);
             return 0;
         }
+
+        if (game->connection->port.buffer[0] == '\0')  {
+            continue;
+        }
+        status = print_font_to_renderer(
+            game->font,
+            game->renderer,
+            game->connection->port.buffer,
+            game->field.relative_size,
+            (SDL_Color){.r = 0, .g = 255, .b = 255, .a = 255},
+            (SDL_Point){width / 10 + 5, (height / 4 + (text_height * 2 * 2)) + game->field.relative_size}
+        );
+        if (status == 0) {
+            SDL_Log("port: %s\n", game->connection->port.buffer);
+            return 0;
+        }
     }
 
-    //printf("ip addr status: %d\n", game->connection->ip_addr.status);
+    status = get_text_size(game->font, game->join_lobby_menu->items[3].text, game->field.relative_size, &text_width, &text_height);
+    if (status == 0) {
+        return 0;
+    }
+
+    for (int i = 3; i < 5; i++) {
+
+        status = print_font_to_renderer(
+            game->font,
+            game->renderer,
+            game->join_lobby_menu->items[i].text,
+            game->field.relative_size,
+            (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
+            (SDL_Point){(width - text_width), (height - text_height - 2 * (i - 3) * game->field.relative_size)}
+        );
+        if (status == 0) {
+            return 0;
+        }
+    }
 
     SDL_DestroyTexture(backgroung_text);
-
+    
     status = SDL_RenderPresent(game->renderer);
     if (status == 0) {
         SDL_Log("SDL_RenderPresent error: %s\n", SDL_GetError());
