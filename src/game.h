@@ -12,7 +12,9 @@ typedef enum _GAME_STATE {
     state_menu = 0,
     state_gameplay,
     state_join_lobby,
-    state_game_over
+    state_game_over,
+    state_waiting_lobby,
+
 } GAME_STATE;
 
 typedef struct _GAME_FIELD {
@@ -33,6 +35,7 @@ typedef struct _GAME {
     MENU            *start_menu;
     MENU            *game_over_menu;
     MENU            *join_lobby_menu;
+    MENU            *waiting_menu;
     CONNECTION      *connection;
     DECK            *deck;
     GAME_FIELD      field;
@@ -56,6 +59,7 @@ extern SCENE g_menu_scene;
 extern SCENE g_gameplay_scene;
 extern SCENE g_game_over_scene;
 extern SCENE g_join_lobby_scene;
+extern SCENE g_waiting_scene;
 
 int init_game(GAME *game, const RESOLUTION *resolution);
 void exit_game(GAME *game);

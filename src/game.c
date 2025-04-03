@@ -55,6 +55,10 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
         return status;
     }
 
+    game->waiting_menu = create_menu(0, NULL);
+    if (game->waiting_menu == NULL) {
+        return status;
+    }
 
     game->window = SDL_CreateWindow(
             "Game", 
@@ -89,8 +93,8 @@ int init_game(GAME *game, const RESOLUTION *resolution) {
         rects[i] = (SDL_FRect){
             .x = resolution->width / 10,
             .y = (resolution->height / 4) + (text_height * 2 * (i + 1)) + game->field.relative_size,
-            .w = game->field.relative_size * 10,
-            .h = game->field.relative_size 
+            .w = resolution->width - (resolution->width / 10) * 2,
+            .h = game->field.relative_size + 5 
         };
     }
 

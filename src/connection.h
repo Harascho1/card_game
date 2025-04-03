@@ -1,6 +1,13 @@
 #ifndef CONNECTING_H
 #define CONNECTING_H
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <fcntl.h>
+#include <errno.h>
+
 typedef enum _TEXT_BOX_STATUS {
     NOT_SELECTED,
     SELECTED
@@ -19,6 +26,7 @@ typedef struct _CONNECTION {
 } CONNECTION;
 
 CONNECTION* connection_init(SDL_FRect rect_ip, SDL_FRect rect_port);
+int connect_to_server(CONNECTION *con);
 void destroy_connection(CONNECTION *connection);
 
 #endif

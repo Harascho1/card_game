@@ -219,7 +219,7 @@ game_over_menu_handle_events(GAME *game, const SDL_Event *event) {
             }
             break;
             case SDLK_DOWN: {
-                if (game->game_over_menu->active_type < start_menu_max - 1) {
+                if (game->game_over_menu->active_type < game_over_menu_max - 1) {
                     game->game_over_menu->items[game->game_over_menu->active_type++].state = item_state_idle;
                     game->game_over_menu->items[game->game_over_menu->active_type].state = item_state_hover;
                 }
@@ -349,6 +349,27 @@ SCENE g_game_over_scene = {
 };
 
 
+int validation_ip_and_port(CONNECTION *connection) {
+    if (connection == NULL) {
+        return 0;
+    }
+
+    if (connection->ip_addr.buffer == NULL || connection->port.buffer == NULL) {
+        return 0;
+    }
+
+    if (strlen(connection->ip_addr.buffer) == 0 || strlen(connection->port.buffer) == 0) {
+        return 0;
+    }
+
+    int port = atoi(connection->port.buffer);
+    if (port < 1 || port > 65535) {
+        return 0;
+    }
+
+    return 1;
+}
+
 
 // * JOIN LOBBY SCENE
 int
@@ -371,6 +392,20 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
                     game->connection->port.status = NOT_SELECTED;
                 }
             }
+            break;
+            case SDLK_BACKSPACE: {
+                if (game->connection->ip_addr.status == SELECTED) {
+                    if (strlen(game->connection->ip_addr.buffer) > 0) {
+                        game->connection->ip_addr.buffer[strlen(game->connection->ip_addr.buffer) - 1] = '\0';
+                    }
+                } else if (game->connection->port.status == SELECTED) {
+                    if (strlen(game->connection->port.buffer) > 0) {
+                        game->connection->port.buffer[strlen(game->connection->port.buffer) - 1] = '\0';
+                    }
+                }
+
+            }
+            break;
             case SDLK_UP: {
                 if (game->join_lobby_menu->active_type > game_over_menu_retry) {
                     game->join_lobby_menu->items[game->join_lobby_menu->active_type--].state = item_state_idle;
@@ -387,7 +422,14 @@ join_lobby_handle_events(GAME *game, const SDL_Event *event) {
             break;
             case SDLK_RETURN: {
                 if (game->join_lobby_menu->active_type == join_lobby_join) {
-                    push_user_event(g_change_scene_event_type, state_gameplay);
+                    if (validation_ip_and_port(game->connection) == 0) {
+                        SDL_Log("Invalid ip or port\n");
+                        break;
+                    }
+                    pthread_t thread;
+                    pthread_create(&thread, NULL, (void*)connect_to_server, game->connection);
+                    pthread_detach(thread);
+                    push_user_event(g_change_scene_event_type, state_waiting_lobby);
                 }
                 else if (game->join_lobby_menu->active_type == join_lobby_back) {
                     push_user_event(g_change_scene_event_type, state_menu);
@@ -473,6 +515,68 @@ join_lobby_render(GAME *game) {
         return status;
     }
 
+    SDL_Surface *rect_surface = SDL_CreateSurface(
+        game->connection->ip_addr.rect.w,
+        game->connection->ip_addr.rect.h,
+        SDL_PIXELFORMAT_RGBA8888
+    );
+    const SDL_PixelFormatDetails *format = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA8888);
+    if (format == NULL) {
+        SDL_Log("SDL_AllocFormat error: %s\n", SDL_GetError());
+        return 0;
+    }
+    Uint32 color = SDL_MapRGBA(format, 0, 0, 255, 255, 255);
+    if (rect_surface == NULL) {
+        SDL_Log("SDL_CreateSurface error: %s\n", SDL_GetError());
+        return 0;
+    }
+    SDL_Rect rect = {
+        .x = 0,
+        .y = 0,
+        //.y = height / 4  + text_height * 2 + game->field.relative_size - 5,
+        .w = game->connection->ip_addr.rect.w + 10,
+        .h = game->connection->ip_addr.rect.h + 10
+    };
+    SDL_FillSurfaceRect(rect_surface, &rect, color);
+    SDL_Texture *rect_texture = SDL_CreateTextureFromSurface(game->renderer, rect_surface);
+    if (rect_texture == NULL) {
+        SDL_Log("SDL_CreateTextureFromSurface error: %s\n", SDL_GetError());
+        return 0;
+    }
+
+    if (game->connection->ip_addr.status == SELECTED) {
+
+        SDL_FRect frect = {
+            .x = game->connection->ip_addr.rect.x - 5,
+            .y = game->connection->ip_addr.rect.y - 5,
+            .w = rect.w,
+            .h = rect.h
+        };
+        status = SDL_RenderTexture(game->renderer, rect_texture, NULL, &frect);
+        if (status == 0) {
+            SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+            return 0;
+        }
+
+    } else if (game->connection->port.status == SELECTED) {
+
+        SDL_FRect frect = {
+            .x = game->connection->port.rect.x - 5,
+            .y = game->connection->port.rect.y - 5,
+            .w = rect.w,
+            .h = rect.h
+        };
+        status = SDL_RenderTexture(game->renderer, rect_texture, NULL, &frect);
+        if (status == 0) {
+            SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
+            return 0;
+        }
+
+    }
+
+    SDL_DestroySurface(rect_surface);
+    SDL_DestroyTexture(rect_texture);
+
     status = SDL_RenderTexture(game->renderer, backgroung_text, NULL, &game->connection->ip_addr.rect);
     if (status == 0) {
         SDL_Log("SDL_RenderText error %s\n", SDL_GetError());
@@ -504,9 +608,9 @@ join_lobby_render(GAME *game) {
             return 0;
         }
 
-        if (game->connection->ip_addr.buffer[0] == '\0')  {
-            continue;
-        }
+    }
+    //ip addr
+    if (game->connection->ip_addr.buffer[0] != '\0')  {
         status = print_font_to_renderer(
             game->font,
             game->renderer,
@@ -519,10 +623,9 @@ join_lobby_render(GAME *game) {
             SDL_Log("ip addr: %s\n", game->connection->ip_addr.buffer);
             return 0;
         }
-
-        if (game->connection->port.buffer[0] == '\0')  {
-            continue;
-        }
+    }
+    //port
+    if (game->connection->port.buffer[0] != '\0')  {
         status = print_font_to_renderer(
             game->font,
             game->renderer,
@@ -550,7 +653,7 @@ join_lobby_render(GAME *game) {
             game->join_lobby_menu->items[i].text,
             game->field.relative_size,
             (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
-            (SDL_Point){(width - text_width), (height - text_height - 2 * (i - 3) * game->field.relative_size)}
+            (SDL_Point){(width - text_width) / 2, (height - text_height - (i - 3) * game->field.relative_size - game->field.relative_size)}
         );
         if (status == 0) {
             return 0;
@@ -572,4 +675,65 @@ SCENE g_join_lobby_scene = {
     .handle_events = join_lobby_handle_events,
     .update = join_lobby_update,
     .renderer = join_lobby_render
+};
+
+int
+waiting_menu_handle_events(GAME *game, const SDL_Event *event) {
+    if (event == NULL || game == NULL) {
+        return -1;
+    }
+
+    if (event->type == SDL_EVENT_KEY_DOWN) {
+        switch (event->key.key) {
+            case SDLK_ESCAPE: {
+                push_user_event(g_change_scene_event_type, state_menu);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    return 0;
+}
+
+int
+waiting_menu_update(GAME *game) {
+    return 0;
+}
+
+int
+waiting_menu_render(GAME *game) {
+    int status;
+
+    if (game == NULL) {
+        return 0;
+    }
+
+    int width, height;
+    status = SDL_GetWindowSizeInPixels(game->window, &width, &height);
+    if (status == 0) {
+        SDL_Log("SDL_GetWindowSize error: %s\n", SDL_GetError());
+        return status;
+    }
+
+    status = SDL_RenderTexture(game->renderer, g_background, NULL, NULL);
+    if (status == 0) {
+        SDL_Log("SDL_RenderTexture error: %s\n", SDL_GetError());
+        return status;
+    }
+
+    status = SDL_RenderPresent(game->renderer);
+    if (status == 0) {
+        SDL_Log("SDL_RenderPresent error: %s\n", SDL_GetError());
+        return status;
+    }
+
+    return status;
+}
+
+SCENE g_waiting_scene = {
+    .handle_events = waiting_menu_handle_events,
+    .update = waiting_menu_update,
+    .renderer = waiting_menu_render
 };

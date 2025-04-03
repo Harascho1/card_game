@@ -9,7 +9,8 @@ g_scene[] = {
     &g_menu_scene,
     &g_gameplay_scene,
     &g_join_lobby_scene,
-    &g_game_over_scene
+    &g_game_over_scene,
+    &g_waiting_scene
 };
 
 static GAME_STATE g_current_scene = state_menu;
@@ -53,7 +54,6 @@ main(int argc, const char * argv[]) {
         exit_game(&game);
         SDL_Quit();
     }
-
 
     SDL_Event event;
     bool is_running = true;
