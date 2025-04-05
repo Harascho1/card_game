@@ -362,12 +362,38 @@ int validation_ip_and_port(CONNECTION *connection) {
         return 0;
     }
 
+    const char* ip = connection->ip_addr.buffer;
+    int n = connection->ip_addr.max_length;
+
+    int count_ip_dots = 0;
+    int i = 0;
+    for (i = 0; i < n && ip[i] != '\0'; i++) {
+        if (ip[i] >= '0' && ip[i] <= '9' || ip[i] == '.') {
+            if (ip[i] == '.') {
+                count_ip_dots++;
+            }
+            continue;
+        }
+        SDL_Log("ip address is not in a valid format");
+        return 0;
+    }
+
+    if (ip[i - 1] == '.') {
+        SDL_Log("ip address does not have last number after 3rd dot");
+        return 0;
+    }
+
+    if (count_ip_dots != 3) {
+        SDL_Log("ip address does not have 3 dots");
+        return 0;
+    }
+
     int port = atoi(connection->port.buffer);
     if (port < 1 || port > 65535) {
         return 0;
     }
 
-    return 1;
+    return true;
 }
 
 
@@ -686,6 +712,7 @@ waiting_menu_handle_events(GAME *game, const SDL_Event *event) {
     if (event->type == SDL_EVENT_KEY_DOWN) {
         switch (event->key.key) {
             case SDLK_ESCAPE: {
+                game->connection->connection = not_connected;
                 push_user_event(g_change_scene_event_type, state_menu);
             }
             break;
@@ -701,6 +728,62 @@ int
 waiting_menu_update(GAME *game) {
     return 0;
 }
+
+int draw_loading_circle(GAME *game, int width_of_screen, int height_of_screen, int radius, float progress) {
+    if (game == NULL) {
+        return 0;
+    }
+
+    int status;
+
+    int center_x = width_of_screen / 2;
+    int center_y = height_of_screen / 2;
+    int segment = 350;
+
+    float angle_step = 2.0f * M_PI / (float)segment;
+    for (int i = 0; i < segment * progress; i++) {
+        double angle = (double)i / angle_step;
+        int x = (int)(center_x + radius * SDL_cos(angle));
+        int y = (int)(center_y + radius * SDL_sin(angle));
+
+        status = SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
+        if (status == 0) {
+            SDL_Log("SDL_SetRenderDrawColor error: %s\n", SDL_GetError());
+            return status;
+        }
+
+        status = SDL_RenderPoint(game->renderer, x, y);
+        if (status == 0) {
+            SDL_Log("SDL_RenderDrawPoint error: %s\n", SDL_GetError());
+            return status;
+        }
+    }
+    return status;
+}
+
+int draw_ring(GAME *game, int width_of_screen, int height_of_screen, int inter_radius, float progress) {
+    if (game == NULL) {
+        return 0;
+    }
+
+    int status ;
+    int outer_radius = inter_radius + 10;
+
+    int center_x = width_of_screen / 2;
+    int center_y = height_of_screen / 2;
+
+    for (int r = inter_radius; r < outer_radius; r++) {
+        status = draw_loading_circle(game, width_of_screen, height_of_screen, r, progress);
+        if (status == 0) {
+            SDL_Log("draw_loading_circle error: %s\n", SDL_GetError());
+            return status;
+        }
+    }
+
+    return status;
+}
+
+float progress = 0.1f;
 
 int
 waiting_menu_render(GAME *game) {
@@ -720,6 +803,17 @@ waiting_menu_render(GAME *game) {
     status = SDL_RenderTexture(game->renderer, g_background, NULL, NULL);
     if (status == 0) {
         SDL_Log("SDL_RenderTexture error: %s\n", SDL_GetError());
+        return status;
+    }
+
+    progress += 0.01f;
+    if (progress > 1.0f) {
+        progress = 0.0f;
+    }
+
+    status = draw_ring(game, width, height, 10, progress);
+    if (status == 0) {
+        SDL_Log("draw_loading_ring error: %s\n", SDL_GetError());
         return status;
     }
 

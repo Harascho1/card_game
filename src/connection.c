@@ -3,20 +3,29 @@
 
 CONNECTION* connection_init(SDL_FRect ip_rect, SDL_FRect port_rect) {
     CONNECTION *connection = SDL_malloc(sizeof(CONNECTION));
+
     connection->ip_addr.buffer = (char*) SDL_malloc(sizeof(char) * 20);
     memset(connection->ip_addr.buffer, 0, sizeof(char) * 20);
     connection->ip_addr.status = SELECTED;
     connection->ip_addr.rect = ip_rect;
     connection->ip_addr.max_length = 20;
+
     connection->port.buffer = (char*) SDL_malloc(sizeof(char) * 6);
     memset(connection->port.buffer, 0, sizeof(char) * 6);
     connection->port.status = NOT_SELECTED;
     connection->port.rect = port_rect;
     connection->port.max_length = 6;
+
+    connection->connection = not_connected;
+
     return connection;
 }
 
 int connect_to_server(CONNECTION *con) {
+    if (con == NULL) {
+        return 0;
+    }
+
     const char *ip = con->ip_addr.buffer;
     const char *port = con->port.buffer;
     if (ip == NULL || port == NULL) {
@@ -25,6 +34,7 @@ int connect_to_server(CONNECTION *con) {
     if (strlen(ip) == 0 || strlen(port) == 0) {
         return 0;
     }
+
     int port_num = atoi(port);
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -78,6 +88,8 @@ int connect_to_server(CONNECTION *con) {
         close(fd);
         return 0;
     }
+    con->connection = connected;
+
     SDL_Log("Connected to server %s:%d\n", ip, port_num);
     int flags = fcntl(fd, F_GETFL, 0);
 

@@ -20,9 +20,15 @@ typedef struct _TEXT_BOX {
     SDL_FRect rect;
 } TEXT_BOX;
 
+typedef enum _CONNECTED {
+    not_connected,
+    connected
+} CONNECTED;
+
 typedef struct _CONNECTION {
     TEXT_BOX ip_addr;
     TEXT_BOX port;
+    CONNECTED connection;
 } CONNECTION;
 
 CONNECTION* connection_init(SDL_FRect rect_ip, SDL_FRect rect_port);
